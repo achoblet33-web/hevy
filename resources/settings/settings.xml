@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <settings>
+        <setting
+            propertyKey="@Properties.apiKey"
+            title="@Strings.ApiKeyTitle"
+            prompt="@Strings.ApiKeyPrompt">
+            <settingConfig type="password" required="true" maxLength="128" />
+        </setting>
+    </settings>
+</resources>

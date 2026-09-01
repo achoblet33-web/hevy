@@ -1,0 +1,5 @@
+project.manifest = manifest.xml
+project.typecheck = 2
+project.optimization = 2
+base.sourcePath = source
+base.resourcePath = resources

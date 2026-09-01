@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<resources>
+    <strings>
+        <string id="AppName">Hevy</string>
+        <string id="ApiKeyTitle">Clé API Hevy</string>
+        <string id="ApiKeyPrompt">Collez la clé API créée dans Hevy.</string>
+        <string id="WeightLabel">Poids</string>
+        <string id="WeightGraphLabel">Poids par série</string>
+        <string id="WeightUnit">kg</string>
+        <string id="RepsLabel">Répétitions</string>
+        <string id="RepsGraphLabel">Répétitions par série</string>
+        <string id="RepsUnit">reps</string>
+    </strings>
+</resources>

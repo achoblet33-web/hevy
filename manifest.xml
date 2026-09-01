@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<iq:manifest xmlns:iq="http://www.garmin.com/xml/connectiq" version="3">
+    <iq:application
+        id="a142c73f384a4c9cb5f2d8e963bd3a8f"
+        type="watch-app"
+        name="@Strings.AppName"
+        entry="HevyApp"
+        launcherIcon="@Drawables.LauncherIcon"
+        minSdkVersion="5.0.0">
+        <iq:products>
+            <iq:product id="fenix847mm" />
+        </iq:products>
+        <iq:permissions>
+            <iq:uses-permission id="Communications" />
+            <iq:uses-permission id="Fit" />
+            <iq:uses-permission id="FitContributor" />
+            <iq:uses-permission id="Sensor" />
+        </iq:permissions>
+        <iq:languages>
+            <iq:language>fre</iq:language>
+            <iq:language>eng</iq:language>
+        </iq:languages>
+    </iq:application>
+</iq:manifest>
