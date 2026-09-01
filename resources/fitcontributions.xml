@@ -8,10 +8,9 @@
             displayInActivitySummary="false"
             sortOrder="0"
             precision="1"
-            chartTitle="@Strings.WeightGraphLabel"
             dataLabel="@Strings.WeightLabel"
             unitLabel="@Strings.WeightUnit"
-            fillColor="#00E676" />
+            />
         <fitField
             id="1"
             displayInChart="false"
@@ -19,9 +18,8 @@
             displayInActivitySummary="false"
             sortOrder="1"
             precision="0"
-            chartTitle="@Strings.RepsGraphLabel"
             dataLabel="@Strings.RepsLabel"
             unitLabel="@Strings.RepsUnit"
-            fillColor="#29B6F6" />
+            />
     </fitContributions>
 </resources>

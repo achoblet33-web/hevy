@@ -69,7 +69,7 @@ class WorkoutDataModel {
         }
     }
 
-    private function onRoutinesResponse(
+    function onRoutinesResponse(
         responseCode as Lang.Number,
         data as Null or Lang.Dictionary or Lang.String or PersistedContent.Iterator
     ) as Void {
@@ -231,7 +231,7 @@ class WorkoutDataModel {
         }
     }
 
-    private function onPendingResponse(
+    function onPendingResponse(
         responseCode as Lang.Number,
         data as Null or Lang.Dictionary or Lang.String or PersistedContent.Iterator
     ) as Void {

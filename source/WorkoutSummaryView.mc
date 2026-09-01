@@ -88,7 +88,7 @@ class WorkoutSummaryView extends WatchUi.View {
         mSession = null;
     }
 
-    private function onUploadComplete(success as Lang.Boolean, remaining as Lang.Number) as Void {
+    function onUploadComplete(success as Lang.Boolean, remaining as Lang.Number) as Void {
         if (success && remaining == 0) {
             mSyncLabel = "Synchronisé avec Hevy";
             mSyncColor = COLOR_GREEN;
@@ -201,7 +201,7 @@ class WorkoutSummaryView extends WatchUi.View {
         drawFittedText(dc, mWidth / 2, percentY(88), Graphics.FONT_XTINY, "BACK pour quitter", COLOR_MUTED, percentX(52));
     }
 
-    private function drawFittedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font, text as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {
+    private function drawFittedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font as Graphics.FontType, text as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {
         var output = text;
         while (output.length() > 3 && dc.getTextWidthInPixels(output, font) > maxWidth) {
             output = output.substring(0, output.length() - 2) as Lang.String;

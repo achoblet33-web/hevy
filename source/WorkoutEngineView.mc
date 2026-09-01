@@ -82,7 +82,7 @@ class WorkoutEngineView extends WatchUi.View {
         stopTicker();
     }
 
-    private function onPendingFlushed(success as Lang.Boolean, remaining as Lang.Number) as Void {
+    function onPendingFlushed(success as Lang.Boolean, remaining as Lang.Number) as Void {
         mLoading = false;
         requestRoutines();
     }
@@ -103,7 +103,7 @@ class WorkoutEngineView extends WatchUi.View {
         WatchUi.requestUpdate();
     }
 
-    private function onRoutinesLoaded(responseCode as Lang.Number, routines as Lang.Array or Null) as Void {
+    function onRoutinesLoaded(responseCode as Lang.Number, routines as Lang.Array or Null) as Void {
         mLoading = false;
         if (routines != null && (routines as Lang.Array).size() > 0) {
             mRoutines = routines as Lang.Array;
@@ -133,7 +133,7 @@ class WorkoutEngineView extends WatchUi.View {
         }
     }
 
-    private function onTick() as Void {
+    function onTick() as Void {
         if (mState == STATE_ACTIVE_SET || mState == STATE_REST) {
             mWorkoutSeconds += 1;
         }
@@ -615,7 +615,7 @@ class WorkoutEngineView extends WatchUi.View {
         drawFittedText(dc, x + (width / 2), y + (height / 2) - 9, Graphics.FONT_XTINY, label, color, width - 10);
     }
 
-    private function drawFittedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font, text as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {
+    private function drawFittedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font as Graphics.FontType, text as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {
         var output = text;
         while (output.length() > 3 && dc.getTextWidthInPixels(output, font) > maxWidth) {
             output = output.substring(0, output.length() - 2) as Lang.String;
