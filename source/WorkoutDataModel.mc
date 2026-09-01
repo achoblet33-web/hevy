@@ -1,6 +1,7 @@
 import Toybox.Application;
 import Toybox.Communications;
 import Toybox.Lang;
+import Toybox.PersistedContent;
 import Toybox.System;
 
 class WorkoutDataModel {
@@ -68,7 +69,10 @@ class WorkoutDataModel {
         }
     }
 
-    private function onRoutinesResponse(responseCode as Lang.Number, data) as Void {
+    private function onRoutinesResponse(
+        responseCode as Lang.Number,
+        data as Null or Lang.Dictionary or Lang.String or PersistedContent.Iterator
+    ) as Void {
         if (responseCode >= 200 && responseCode < 300 && data instanceof Lang.Dictionary) {
             var normalized = normalizeRoutines(data as Lang.Dictionary);
             if (normalized.size() > 0) {
@@ -227,7 +231,10 @@ class WorkoutDataModel {
         }
     }
 
-    private function onPendingResponse(responseCode as Lang.Number, data) as Void {
+    private function onPendingResponse(
+        responseCode as Lang.Number,
+        data as Null or Lang.Dictionary or Lang.String or PersistedContent.Iterator
+    ) as Void {
         var success = responseCode >= 200 && responseCode < 300;
         if (success) {
             removeOldestPending();
