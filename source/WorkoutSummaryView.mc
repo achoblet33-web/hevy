@@ -133,7 +133,7 @@ class WorkoutSummaryView extends WatchUi.View {
     private function buildExercisePayloads() as Lang.Array {
         var exercises = [];
         var currentExerciseIndex = -1;
-        var exercisePayload as Lang.Dictionary or Null = null;
+        var exercisePayload = null;
         for (var index = 0; index < mHistory.size(); index += 1) {
             var raw = mHistory[index];
             if (!(raw instanceof Lang.Dictionary)) {
@@ -258,24 +258,3 @@ class WorkoutSummaryView extends WatchUi.View {
         return fallback;
     }
 
-    private function dictionaryFloat(dictionary as Lang.Dictionary, key as Lang.String, fallback as Lang.Float) as Lang.Float {
-        var value = dictionary[key];
-        if (value == null) {
-            return fallback;
-        }
-        if (value instanceof Lang.Number) {
-            return (value as Lang.Number).toFloat();
-        }
-        if (value instanceof Lang.Float) {
-            return value as Lang.Float;
-        }
-        if (value instanceof Lang.Double) {
-            return (value as Lang.Double).toFloat();
-        }
-        if (value instanceof Lang.String) {
-            var parsed = (value as Lang.String).toFloat();
-            return parsed == null ? fallback : parsed as Lang.Float;
-        }
-        return fallback;
-    }
-}
