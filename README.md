@@ -22,9 +22,13 @@ Garmin Connect affiche ces valeurs comme champs Connect IQ dans les tours et le 
 
 ## Configuration
 
-1. Ouvrir les paramètres de l'application dans Garmin Connect, Connect IQ Store ou Garmin Express.
-2. Renseigner **Clé API Hevy**. La clé n'est pas inscrite dans le code source.
-3. Garder le téléphone connecté pour les échanges HTTP. Une routine déjà mise en cache reste lançable hors ligne.
+1. Disposer de Hevy Pro, puis ouvrir `https://hevy.com/settings?developer` dans un navigateur.
+2. Créer une clé API personnelle et la copier.
+3. Dans Garmin Connect, ouvrir **Appareils Garmin → Fenix 8 → Activités et applications → Strength Sync → Paramètres**. Le même réglage est accessible dans Connect IQ Store ou Garmin Express.
+4. Coller la clé dans **Clé API Hevy**, puis enregistrer et synchroniser la montre.
+5. Garder le téléphone connecté pour le premier chargement et les échanges HTTP. Une routine déjà mise en cache reste lançable hors ligne.
+
+La clé est enregistrée dans le stockage privé de l'application sur l'appareil et n'est jamais incluse dans le code source. Ne jamais la publier ni la communiquer à un tiers ; la révoquer depuis Hevy si elle a été exposée.
 
 ## Commandes
 
@@ -75,3 +79,7 @@ Le dépôt ne contient ni clé API Hevy ni clé de signature Garmin. La permissi
 - [Guide de publication Connect IQ](docs/STORE_SUBMISSION.md)
 
 Chaque utilisateur doit fournir sa propre clé API Hevy. Les échanges se font directement entre la montre et l’API Hevy en HTTPS ; le projet n’exploite aucun serveur intermédiaire, outil d’analyse ou publicité.
+
+## Compatibilité
+
+La version actuelle est compilée et déclarée uniquement pour le produit Connect IQ `fenix847mm`. Les coordonnées relatives protègent la mise en page sur les appareils qui partagent exactement ce profil, mais elles ne suffisent pas à garantir un affichage correct sur toutes les montres Garmin. Chaque nouvelle famille doit être ajoutée au manifeste, compilée séparément, puis testée dans son simulateur et, idéalement, sur une vraie montre. Les écrans AMOLED 416/454 px constituent la prochaine cible logique ; les écrans MIP 260/280 px nécessitent une mise en page compacte dédiée.

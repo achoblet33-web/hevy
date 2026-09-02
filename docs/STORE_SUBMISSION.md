@@ -18,6 +18,38 @@ Prérequis : abonnement Hevy Pro, clé API personnelle, téléphone appairé pou
 
 Politique de confidentialité : `https://github.com/achoblet33-web/hevy/blob/main/PRIVACY.md`
 
+## English store description
+
+Strength Sync for Hevy brings your Hevy routines to your Garmin watch. Select a routine, follow every exercise and set, quickly adjust repetitions or weight with the touch selector, manage rest periods, and upload the completed workout privately to your Hevy account.
+
+The app also records a native Garmin strength-training activity with heart-rate data. Exercise name, set number, weight and repetitions are added to each lap as Connect IQ FIT fields, with total sets, repetitions and training volume in the activity summary.
+
+Controls:
+
+- **START/ENTER:** pause or resume the workout.
+- **BACK/LAP:** log the current set or skip the current rest period.
+- **Tap REPS or WEIGHT:** open the quick value selector; swipe, tap a row or use UP/DOWN to adjust it.
+- **LOG SET:** save the current set.
+- **FINISH:** end and save the workout.
+- **PAUSE → CANCEL:** discard the workout after confirmation; nothing is sent to Hevy or saved to Garmin.
+
+How to connect Hevy:
+
+1. A Hevy Pro subscription and personal API key are required.
+2. Create the key at `https://hevy.com/settings?developer`.
+3. Open Garmin Connect → Garmin Devices → your watch → Activities & Apps → Strength Sync → Settings.
+4. Paste the key into **Hevy API Key**, save, and sync the watch.
+
+Your key is stored in the app's private device storage and is sent only to the Hevy API over HTTPS. Never share your key; revoke it in Hevy if it is exposed. Previously cached routines remain available offline, and completed workouts are queued for a later upload if the connection is unavailable.
+
+Requirements: compatible Garmin Fenix 8 profile, paired phone for synchronization, Hevy Pro and a personal API key. Independent application, not affiliated with Hevy or Garmin. Exercise details appear in Garmin Connect as Connect IQ lap data and do not replace Garmin's native exercise editor.
+
+Privacy policy: `https://github.com/achoblet33-web/hevy/blob/main/PRIVACY.md`
+
+## Compatibilité publiée
+
+Le manifeste actuel ne contient que `fenix847mm`. Ne cocher dans le portail Garmin que les appareils réellement contenus dans le fichier `.iq` et testés. Pour élargir la compatibilité, ajouter les produits par groupes de résolution, compiler chaque cible, vérifier toutes les vues dans le simulateur, puis tester au moins une montre physique par famille d'écran.
+
 ## Checklist avant envoi
 
 - [ ] Tester une séance complète sur la vraie Fenix 8 et vérifier l’activité dans Garmin Connect mobile et web.
@@ -62,3 +94,5 @@ java -Xms1g -Dfile.encoding=UTF-8 -jar "C:\chemin\ConnectIQ\Sdks\9.2.0\bin\monke
 ## Mise à jour ultérieure
 
 Toujours repartir du même UUID de production et signer avec la même clé développeur. Tester d’abord sur une application bêta à UUID séparé si une modification touche le format FIT, le stockage ou les échanges Hevy. Un UUID déjà utilisé comme bêta ne doit pas être réutilisé pour la fiche publique.
+
+Pour chaque nouvelle version : modifier le code sur ordinateur, tester dans le simulateur et sur la montre, exporter un nouveau `.iq` avec la clé développeur permanente, puis téléverser ce fichier comme mise à jour de la fiche existante en augmentant son numéro de version. Après validation Garmin, les utilisateurs installent la mise à jour via Garmin Connect/Connect IQ ; il n'est pas nécessaire de réinstaller manuellement l'application sur chaque montre.

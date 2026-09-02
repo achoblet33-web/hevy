@@ -67,6 +67,7 @@ class WorkoutEngineView extends WatchUi.View {
     private var mTotalRepsField as FitContributor.Field or Null = null;
     private var mTotalVolumeField as FitContributor.Field or Null = null;
     private var mTicker as Timer.Timer or Null = null;
+    private var mLastTickSeconds as Lang.Number = 0;
 
     private var mNetworkStarted as Lang.Boolean = false;
     private var mLoading as Lang.Boolean = false;
@@ -91,6 +92,12 @@ class WorkoutEngineView extends WatchUi.View {
     }
 
     function onShow() as Void {
+        if (mState != STATE_PAUSED) {
+            // Start the foreground ticker before a routine is selected. On some
+            // devices, creating it from the same tap callback that starts the
+            // FIT session can delay its first execution until the next resume.
+            startTicker();
+        }
         if (!mNetworkStarted) {
             mNetworkStarted = true;
             mLoading = true;
@@ -141,6 +148,7 @@ class WorkoutEngineView extends WatchUi.View {
     }
 
     private function startTicker() as Void {
+        mLastTickSeconds = Time.now().value();
         if (mTicker == null && !mFinishing) {
             mTicker = new Timer.Timer();
             (mTicker as Timer.Timer).start(method(:onTick), 1000, true);
@@ -155,12 +163,19 @@ class WorkoutEngineView extends WatchUi.View {
     }
 
     function onTick() as Void {
+        var nowSeconds = Time.now().value();
+        var elapsedSeconds = nowSeconds - mLastTickSeconds;
+        mLastTickSeconds = nowSeconds;
+        if (elapsedSeconds < 1) {
+            elapsedSeconds = 1;
+        }
+
         if (mState == STATE_ACTIVE_SET || mState == STATE_REST) {
-            mWorkoutSeconds += 1;
+            mWorkoutSeconds += elapsedSeconds;
         }
         if (mState == STATE_REST) {
             if (mRestRemaining > 0) {
-                mRestRemaining -= 1;
+                mRestRemaining -= elapsedSeconds;
             }
             if (mRestRemaining <= 0) {
                 vibrateRestFinished();
@@ -340,6 +355,7 @@ class WorkoutEngineView extends WatchUi.View {
         loadCurrentTarget();
         createFitSession();
         mState = STATE_ACTIVE_SET;
+        // Reset the elapsed-time baseline so preparation time is never counted.
         startTicker();
         mMessage = "Séance active";
         persistDraft();
