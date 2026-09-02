@@ -27,7 +27,8 @@ Politique de confidentialité : `https://github.com/achoblet33-web/hevy/blob/mai
 - [ ] Tester une clé invalide ou révoquée sans exposer sa valeur dans un message.
 - [ ] Tester annulation, pause, fin anticipée et sortie inattendue.
 - [ ] Produire des captures nettes du sélecteur de routine, d’une série active, de la roulette et du résumé.
-- [ ] Conserver l’UUID de production `a142c73f384a4c9cb5f2d8e963bd3a8f` et la même clé de signature pour toutes les mises à jour.
+- [ ] Vérifier le statut de l’UUID actuel `a142c73f384a4c9cb5f2d8e963bd3a8f` : s’il a déjà été importé en cochant **Beta App**, générer un nouvel UUID pour la première soumission publique.
+- [ ] Une fois l’UUID de production publié, ne plus jamais le changer et utiliser la même clé de signature pour toutes les mises à jour.
 - [ ] Faire une sauvegarde chiffrée de la clé développeur permanente.
 - [ ] Vérifier que `git status` n’inclut aucun `.der`, `.pem`, `.key`, `.iq`, `.prg`, `.fit` ou `.env`.
 - [ ] Exporter le projet avec le SDK stable ciblé et la clé permanente.
@@ -60,4 +61,4 @@ java -Xms1g -Dfile.encoding=UTF-8 -jar "C:\chemin\ConnectIQ\Sdks\9.2.0\bin\monke
 
 ## Mise à jour ultérieure
 
-Toujours repartir du même UUID d’application et signer avec la même clé développeur. Tester d’abord sur une application bêta à UUID séparé si une modification touche le format FIT, le stockage ou les échanges Hevy.
+Toujours repartir du même UUID de production et signer avec la même clé développeur. Tester d’abord sur une application bêta à UUID séparé si une modification touche le format FIT, le stockage ou les échanges Hevy. Un UUID déjà utilisé comme bêta ne doit pas être réutilisé pour la fiche publique.
