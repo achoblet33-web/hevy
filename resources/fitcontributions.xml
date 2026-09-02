@@ -21,5 +21,54 @@
             dataLabel="@Strings.RepsLabel"
             unitLabel="@Strings.RepsUnit"
             />
+        <fitField
+            id="2"
+            displayInChart="false"
+            displayInActivityLaps="true"
+            displayInActivitySummary="false"
+            sortOrder="2"
+            dataLabel="@Strings.ExerciseLabel"
+            unitLabel="@Strings.EmptyUnit"
+            />
+        <fitField
+            id="3"
+            displayInChart="false"
+            displayInActivityLaps="true"
+            displayInActivitySummary="false"
+            sortOrder="3"
+            precision="0"
+            dataLabel="@Strings.SetNumberLabel"
+            unitLabel="@Strings.EmptyUnit"
+            />
+        <fitField
+            id="4"
+            displayInChart="false"
+            displayInActivityLaps="false"
+            displayInActivitySummary="true"
+            sortOrder="4"
+            precision="0"
+            dataLabel="@Strings.TotalSetsLabel"
+            unitLabel="@Strings.SetsUnit"
+            />
+        <fitField
+            id="5"
+            displayInChart="false"
+            displayInActivityLaps="false"
+            displayInActivitySummary="true"
+            sortOrder="5"
+            precision="0"
+            dataLabel="@Strings.TotalRepsLabel"
+            unitLabel="@Strings.RepsUnit"
+            />
+        <fitField
+            id="6"
+            displayInChart="false"
+            displayInActivityLaps="false"
+            displayInActivitySummary="true"
+            sortOrder="6"
+            precision="1"
+            dataLabel="@Strings.TotalVolumeLabel"
+            unitLabel="@Strings.WeightUnit"
+            />
     </fitContributions>
 </resources>

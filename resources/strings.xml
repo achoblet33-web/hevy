@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <resources>
     <strings>
-        <string id="AppName">Hevy</string>
+        <string id="AppName">Strength Sync</string>
         <string id="ApiKeyTitle">Clé API Hevy</string>
         <string id="ApiKeyPrompt">Collez la clé API créée dans Hevy.</string>
         <string id="WeightLabel">Poids</string>
@@ -10,5 +10,12 @@
         <string id="RepsLabel">Répétitions</string>
         <string id="RepsGraphLabel">Répétitions par série</string>
         <string id="RepsUnit">reps</string>
+        <string id="ExerciseLabel">Exercice</string>
+        <string id="SetNumberLabel">Série</string>
+        <string id="TotalSetsLabel">Séries terminées</string>
+        <string id="TotalRepsLabel">Répétitions totales</string>
+        <string id="TotalVolumeLabel">Volume total</string>
+        <string id="SetsUnit">séries</string>
+        <string id="EmptyUnit"></string>
     </strings>
 </resources>

@@ -3,3 +3,9 @@ bin/
 *.iq
 *.fit
 developer_key.der
+developer_key
+*.der
+*.pem
+*.key
+.env
+.env.*

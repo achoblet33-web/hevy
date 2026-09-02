@@ -9,11 +9,21 @@ class WorkoutDataModel {
     private const ROUTINE_CACHE_KEY = "routineCacheV2";
     private const DRAFT_KEY = "activeWorkoutDraftV1";
     private const PENDING_KEY = "pendingWorkoutsV1";
+    private const MAX_ROUTINES = 10;
+    private const MAX_EXERCISES_PER_ROUTINE = 40;
+    private const MAX_SETS_PER_ROUTINE = 150;
+    private const MAX_SETS_PER_EXERCISE = 150;
+    private const MAX_PENDING_WORKOUTS = 3;
+    private const MAX_TITLE_LENGTH = 80;
+    private const MAX_ID_LENGTH = 128;
 
     private var mRoutineCallback as Lang.Method or Null = null;
     private var mPendingCallback as Lang.Method or Null = null;
 
     function initialize() {
+        // A draft is only useful while this process is active. A previous process
+        // has already finalized its FIT file in onStop(), so do not retain it.
+        clearDraft();
     }
 
     function getApiKey() as Lang.String {
@@ -32,9 +42,12 @@ class WorkoutDataModel {
     }
 
     function getCachedRoutines() as Lang.Array {
-        var stored = Application.Storage.getValue(ROUTINE_CACHE_KEY);
-        if (stored instanceof Lang.Array) {
-            return stored as Lang.Array;
+        try {
+            var stored = Application.Storage.getValue(ROUTINE_CACHE_KEY);
+            if (stored instanceof Lang.Array) {
+                return stored as Lang.Array;
+            }
+        } catch (error) {
         }
         return [];
     }
@@ -76,7 +89,7 @@ class WorkoutDataModel {
         if (responseCode >= 200 && responseCode < 300 && data instanceof Lang.Dictionary) {
             var normalized = normalizeRoutines(data as Lang.Dictionary);
             if (normalized.size() > 0) {
-                Application.Storage.setValue(ROUTINE_CACHE_KEY, normalized);
+                cacheRoutines(normalized);
                 finishRoutineRequest(responseCode, normalized);
                 return;
             }
@@ -100,7 +113,7 @@ class WorkoutDataModel {
         }
 
         var routines = rawRoutines as Lang.Array;
-        for (var routineIndex = 0; routineIndex < routines.size(); routineIndex += 1) {
+        for (var routineIndex = 0; routineIndex < routines.size() && result.size() < MAX_ROUTINES; routineIndex += 1) {
             var rawRoutine = routines[routineIndex];
             if (!(rawRoutine instanceof Lang.Dictionary)) {
                 continue;
@@ -113,22 +126,27 @@ class WorkoutDataModel {
             }
 
             result.add({
-                "id" => valueAsString(routine["id"], ""),
-                "title" => valueAsString(routine["title"], "Routine Hevy"),
+                "id" => valueAsBoundedString(routine["id"], "", MAX_ID_LENGTH),
+                "title" => valueAsBoundedString(routine["title"], "Routine Hevy", MAX_TITLE_LENGTH),
                 "exercises" => normalizedExercises
             });
         }
         return result;
     }
 
-    private function normalizeExercises(rawExercises) as Lang.Array {
+    private function normalizeExercises(rawExercises as Lang.Object or Null) as Lang.Array {
         var result = [];
         if (!(rawExercises instanceof Lang.Array)) {
             return result;
         }
 
         var exercises = rawExercises as Lang.Array;
-        for (var exerciseIndex = 0; exerciseIndex < exercises.size(); exerciseIndex += 1) {
+        var totalSets = 0;
+        for (var exerciseIndex = 0;
+            exerciseIndex < exercises.size()
+                && result.size() < MAX_EXERCISES_PER_ROUTINE
+                && totalSets < MAX_SETS_PER_ROUTINE;
+            exerciseIndex += 1) {
             var rawExercise = exercises[exerciseIndex];
             if (!(rawExercise instanceof Lang.Dictionary)) {
                 continue;
@@ -139,25 +157,30 @@ class WorkoutDataModel {
             if (normalizedSets.size() == 0) {
                 continue;
             }
+            var remainingSets = MAX_SETS_PER_ROUTINE - totalSets;
+            if (normalizedSets.size() > remainingSets) {
+                normalizedSets = firstItems(normalizedSets, remainingSets);
+            }
 
             result.add({
-                "title" => valueAsString(exercise["title"], "Exercice"),
-                "exercise_template_id" => valueAsString(exercise["exercise_template_id"], ""),
-                "rest_seconds" => valueAsNumber(exercise["rest_seconds"], 90),
+                "title" => valueAsBoundedString(exercise["title"], "Exercice", MAX_TITLE_LENGTH),
+                "exercise_template_id" => valueAsBoundedString(exercise["exercise_template_id"], "", MAX_ID_LENGTH),
+                "rest_seconds" => clampNumber(valueAsNumber(exercise["rest_seconds"], 90), 0, 600),
                 "sets" => normalizedSets
             });
+            totalSets += normalizedSets.size();
         }
         return result;
     }
 
-    private function normalizeSets(rawSets) as Lang.Array {
+    private function normalizeSets(rawSets as Lang.Object or Null) as Lang.Array {
         var result = [];
         if (!(rawSets instanceof Lang.Array)) {
             return result;
         }
 
         var sets = rawSets as Lang.Array;
-        for (var setIndex = 0; setIndex < sets.size(); setIndex += 1) {
+        for (var setIndex = 0; setIndex < sets.size() && result.size() < MAX_SETS_PER_EXERCISE; setIndex += 1) {
             var rawSet = sets[setIndex];
             if (!(rawSet instanceof Lang.Dictionary)) {
                 continue;
@@ -165,26 +188,49 @@ class WorkoutDataModel {
 
             var setData = rawSet as Lang.Dictionary;
             result.add({
-                "type" => valueAsString(setData["type"], "normal"),
-                "weight_kg" => valueAsFloat(setData["weight_kg"], 0.0),
-                "reps" => valueAsNumber(setData["reps"], 0)
+                "type" => valueAsBoundedString(setData["type"], "normal", 16),
+                "weight_kg" => clampFloat(valueAsFloat(setData["weight_kg"], 0.0), 0.0, 999.0),
+                "reps" => clampNumber(valueAsNumber(setData["reps"], 0), 0, 999)
             });
         }
         return result;
     }
 
     function saveDraft(draft as Lang.Dictionary) as Void {
-        Application.Storage.setValue(DRAFT_KEY, draft);
+        try {
+            Application.Storage.setValue(DRAFT_KEY, draft);
+        } catch (error) {
+        }
     }
 
     function clearDraft() as Void {
-        Application.Storage.deleteValue(DRAFT_KEY);
+        try {
+            Application.Storage.deleteValue(DRAFT_KEY);
+        } catch (error) {
+        }
     }
 
-    function enqueueWorkout(payload as Lang.Dictionary) as Void {
+    function enqueueWorkout(payload as Lang.Dictionary) as Lang.Boolean {
         var pending = getPendingWorkouts();
-        pending.add(payload);
-        Application.Storage.setValue(PENDING_KEY, pending);
+        var limited = [];
+        var firstIndex = pending.size() >= MAX_PENDING_WORKOUTS
+            ? pending.size() - (MAX_PENDING_WORKOUTS - 1)
+            : 0;
+        for (var index = firstIndex; index < pending.size(); index += 1) {
+            limited.add(pending[index]);
+        }
+        limited.add(payload);
+        try {
+            Application.Storage.setValue(PENDING_KEY, limited);
+            return true;
+        } catch (error) {
+            try {
+                Application.Storage.setValue(PENDING_KEY, [payload]);
+                return true;
+            } catch (fallbackError) {
+                return false;
+            }
+        }
     }
 
     function pendingCount() as Lang.Number {
@@ -251,9 +297,12 @@ class WorkoutDataModel {
     }
 
     private function getPendingWorkouts() as Lang.Array {
-        var stored = Application.Storage.getValue(PENDING_KEY);
-        if (stored instanceof Lang.Array) {
-            return stored as Lang.Array;
+        try {
+            var stored = Application.Storage.getValue(PENDING_KEY);
+            if (stored instanceof Lang.Array) {
+                return stored as Lang.Array;
+            }
+        } catch (error) {
         }
         return [];
     }
@@ -264,7 +313,16 @@ class WorkoutDataModel {
         for (var index = 1; index < pending.size(); index += 1) {
             remaining.add(pending[index]);
         }
-        Application.Storage.setValue(PENDING_KEY, remaining);
+        try {
+            Application.Storage.setValue(PENDING_KEY, remaining);
+        } catch (error) {
+            // Avoid resending an already accepted workout if storage becomes
+            // unavailable while removing it from the queue.
+            try {
+                Application.Storage.deleteValue(PENDING_KEY);
+            } catch (deleteError) {
+            }
+        }
     }
 
     private function buildHeaders(apiKey as Lang.String) as Lang.Dictionary {
@@ -274,7 +332,43 @@ class WorkoutDataModel {
         };
     }
 
-    private function valueAsString(value, fallback as Lang.String) as Lang.String {
+    private function cacheRoutines(routines as Lang.Array) as Void {
+        try {
+            Application.Storage.setValue(ROUTINE_CACHE_KEY, routines);
+            return;
+        } catch (error) {
+        }
+
+        var reduced = firstItems(routines, 3);
+        try {
+            Application.Storage.setValue(ROUTINE_CACHE_KEY, reduced);
+        } catch (error) {
+            if (reduced.size() > 0) {
+                try {
+                    Application.Storage.setValue(ROUTINE_CACHE_KEY, [reduced[0]]);
+                } catch (lastError) {
+                }
+            }
+        }
+    }
+
+    private function firstItems(values as Lang.Array, maximum as Lang.Number) as Lang.Array {
+        var result = [];
+        for (var index = 0; index < values.size() && index < maximum; index += 1) {
+            result.add(values[index]);
+        }
+        return result;
+    }
+
+    private function valueAsBoundedString(value as Lang.Object or Null, fallback as Lang.String, maximum as Lang.Number) as Lang.String {
+        var result = valueAsString(value, fallback);
+        if (result.length() <= maximum) {
+            return result;
+        }
+        return result.substring(0, maximum) as Lang.String;
+    }
+
+    private function valueAsString(value as Lang.Object or Null, fallback as Lang.String) as Lang.String {
         if (value == null) {
             return fallback;
         }
@@ -284,7 +378,7 @@ class WorkoutDataModel {
         return (value as Lang.Object).toString();
     }
 
-    private function valueAsNumber(value, fallback as Lang.Number) as Lang.Number {
+    private function valueAsNumber(value as Lang.Object or Null, fallback as Lang.Number) as Lang.Number {
         if (value == null) {
             return fallback;
         }
@@ -304,7 +398,7 @@ class WorkoutDataModel {
         return fallback;
     }
 
-    private function valueAsFloat(value, fallback as Lang.Float) as Lang.Float {
+    private function valueAsFloat(value as Lang.Object or Null, fallback as Lang.Float) as Lang.Float {
         if (value == null) {
             return fallback;
         }
@@ -322,5 +416,25 @@ class WorkoutDataModel {
             return parsed == null ? fallback : parsed as Lang.Float;
         }
         return fallback;
+    }
+
+    private function clampNumber(value as Lang.Number, minimum as Lang.Number, maximum as Lang.Number) as Lang.Number {
+        if (value < minimum) {
+            return minimum;
+        }
+        if (value > maximum) {
+            return maximum;
+        }
+        return value;
+    }
+
+    private function clampFloat(value as Lang.Float, minimum as Lang.Float, maximum as Lang.Float) as Lang.Float {
+        if (value < minimum) {
+            return minimum;
+        }
+        if (value > maximum) {
+            return maximum;
+        }
+        return value;
     }
 }

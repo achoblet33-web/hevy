@@ -63,10 +63,14 @@ class WorkoutSummaryView extends WatchUi.View {
                 mSyncLabel = "Aucune série à envoyer";
                 mSyncColor = COLOR_MUTED;
             } else {
-                mModel.enqueueWorkout(buildWorkoutPayload());
-                mSyncLabel = "Envoi Hevy...";
-                mSyncColor = COLOR_ORANGE;
-                mModel.flushOldestPending(method(:onUploadComplete));
+                if (mModel.enqueueWorkout(buildWorkoutPayload())) {
+                    mSyncLabel = "Envoi Hevy...";
+                    mSyncColor = COLOR_ORANGE;
+                    mModel.flushOldestPending(method(:onUploadComplete));
+                } else {
+                    mSyncLabel = "Stockage plein - envoi impossible";
+                    mSyncColor = COLOR_RED;
+                }
             }
         }
         WatchUi.requestUpdate();

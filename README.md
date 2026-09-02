@@ -1,13 +1,14 @@
-# Hevy pour Garmin Fenix 8
+# Strength Sync for Hevy — Garmin Fenix 8
 
-Application Connect IQ autonome de musculation pour `fenix847mm`, conçue pour le SDK 9.2.0 et le typage Monkey C niveau 2.
+Application Connect IQ autonome de musculation pour `fenix847mm`, conçue pour le SDK 9.2.0 et le typage Monkey C niveau 2. Projet indépendant, non affilié à Hevy ni à Garmin.
 
 ## Fonctions
 
 - charge les 10 premières routines Hevy et conserve un cache hors ligne compact ;
 - enregistre une activité Garmin de type entraînement de force ;
 - active le capteur cardiaque afin que les données physiologiques natives alimentent le FIT ;
-- écrit le poids (`Float`) et les répétitions (`UInt16`) comme champs FIT par tour ;
+- écrit l’exercice, le numéro de série, le poids et les répétitions comme champs FIT par tour ;
+- ajoute au résumé FIT le nombre de séries, les répétitions totales et le volume ;
 - prend en charge boutons physiques et zones tactiles relatives à l'écran ;
 - précharge pour chaque série la cible exacte de répétitions et de poids reçue de Hevy ;
 - ouvre une roulette tactile dédiée lorsqu'on touche les répétitions ou le poids ;
@@ -16,6 +17,8 @@ Application Connect IQ autonome de musculation pour `fenix847mm`, conçue pour l
 - met les séances terminées en file locale avant l'envoi à Hevy ;
 - réessaie une séance en attente au lancement suivant ;
 - produit des dates ISO 8601 UTC pour l'API Hevy.
+
+Garmin Connect affiche ces valeurs comme champs Connect IQ dans les tours et le résumé de l’activité. Connect IQ ne permet pas à une application tierce de créer les messages FIT natifs `set` utilisés par l’éditeur d’exercices Garmin : les exercices ne deviennent donc pas des cartes de musculation Garmin modifiables.
 
 ## Configuration
 
@@ -64,3 +67,11 @@ Chaque push sur `main` déclenche également `.github/workflows/garmin-ci.yml`. 
 4. Forcer un échec HTTP au résumé, relancer l'app, puis vérifier que la file d'attente se vide.
 
 Le dépôt ne contient ni clé API Hevy ni clé de signature Garmin. La permission `Sensor` complète les trois permissions demandées afin d'activer explicitement la fréquence cardiaque avant le démarrage du FIT.
+
+## Publication et confidentialité
+
+- [Politique de confidentialité](PRIVACY.md)
+- [Politique de sécurité](SECURITY.md)
+- [Guide de publication Connect IQ](docs/STORE_SUBMISSION.md)
+
+Chaque utilisateur doit fournir sa propre clé API Hevy. Les échanges se font directement entre la montre et l’API Hevy en HTTPS ; le projet n’exploite aucun serveur intermédiaire, outil d’analyse ou publicité.

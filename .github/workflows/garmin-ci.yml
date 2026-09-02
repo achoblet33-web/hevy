@@ -33,6 +33,7 @@ jobs:
           test "$(find source -maxdepth 1 -name '*.mc' -type f | wc -l)" -eq 6
           test -f resources/drawables/launcher_icon.png
           ! grep -R --line-number -E 'api-key.{0,8}[A-Za-z0-9_-]{20,}' source resources manifest.xml
+          ! find . -type f \( -name '*.der' -o -name '*.pem' -o -name '*.key' -o -name '*.iq' -o -name '*.prg' -o -name '*.fit' -o -name '.env*' \) -not -path './.git/*' | grep .
 
       - name: Generate ephemeral signing key
         shell: bash

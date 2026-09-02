@@ -18,6 +18,12 @@ class WorkoutEngineView extends WatchUi.View {
 
     private const FIT_WEIGHT_FIELD_ID = 0;
     private const FIT_REPS_FIELD_ID = 1;
+    private const FIT_EXERCISE_FIELD_ID = 2;
+    private const FIT_SET_NUMBER_FIELD_ID = 3;
+    private const FIT_TOTAL_SETS_FIELD_ID = 4;
+    private const FIT_TOTAL_REPS_FIELD_ID = 5;
+    private const FIT_TOTAL_VOLUME_FIELD_ID = 6;
+    private const FIT_EXERCISE_NAME_BYTES = 120;
     private const WEIGHT_STEP_KG = 2.5;
     private const REST_STEP_SECONDS = 15;
     private const EDITOR_NONE = 0;
@@ -55,6 +61,11 @@ class WorkoutEngineView extends WatchUi.View {
     private var mSession as ActivityRecording.Session or Null = null;
     private var mWeightField as FitContributor.Field or Null = null;
     private var mRepsField as FitContributor.Field or Null = null;
+    private var mExerciseField as FitContributor.Field or Null = null;
+    private var mSetNumberField as FitContributor.Field or Null = null;
+    private var mTotalSetsField as FitContributor.Field or Null = null;
+    private var mTotalRepsField as FitContributor.Field or Null = null;
+    private var mTotalVolumeField as FitContributor.Field or Null = null;
     private var mTicker as Timer.Timer or Null = null;
 
     private var mNetworkStarted as Lang.Boolean = false;
@@ -287,6 +298,11 @@ class WorkoutEngineView extends WatchUi.View {
         mSession = null;
         mWeightField = null;
         mRepsField = null;
+        mExerciseField = null;
+        mSetNumberField = null;
+        mTotalSetsField = null;
+        mTotalRepsField = null;
+        mTotalVolumeField = null;
         mCompletedSetsHistory = [];
         mModel.clearDraft();
         System.exit();
@@ -359,12 +375,51 @@ class WorkoutEngineView extends WatchUi.View {
                 FitContributor.DATA_TYPE_UINT16,
                 { :mesgType => FitContributor.MESG_TYPE_LAP, :units => "reps" }
             );
+            mExerciseField = session.createField(
+                "exercise_name",
+                FIT_EXERCISE_FIELD_ID,
+                FitContributor.DATA_TYPE_STRING,
+                {
+                    :count => FIT_EXERCISE_NAME_BYTES,
+                    :mesgType => FitContributor.MESG_TYPE_LAP,
+                    :units => ""
+                }
+            );
+            mSetNumberField = session.createField(
+                "set_number",
+                FIT_SET_NUMBER_FIELD_ID,
+                FitContributor.DATA_TYPE_UINT16,
+                { :mesgType => FitContributor.MESG_TYPE_LAP, :units => "" }
+            );
+            mTotalSetsField = session.createField(
+                "total_sets",
+                FIT_TOTAL_SETS_FIELD_ID,
+                FitContributor.DATA_TYPE_UINT16,
+                { :mesgType => FitContributor.MESG_TYPE_SESSION, :units => "sets" }
+            );
+            mTotalRepsField = session.createField(
+                "total_repetitions",
+                FIT_TOTAL_REPS_FIELD_ID,
+                FitContributor.DATA_TYPE_UINT32,
+                { :mesgType => FitContributor.MESG_TYPE_SESSION, :units => "reps" }
+            );
+            mTotalVolumeField = session.createField(
+                "total_volume_kg",
+                FIT_TOTAL_VOLUME_FIELD_ID,
+                FitContributor.DATA_TYPE_FLOAT,
+                { :mesgType => FitContributor.MESG_TYPE_SESSION, :units => "kg" }
+            );
             session.start();
         } catch (error) {
             Sensor.setEnabledSensors([]);
             mSession = null;
             mWeightField = null;
             mRepsField = null;
+            mExerciseField = null;
+            mSetNumberField = null;
+            mTotalSetsField = null;
+            mTotalRepsField = null;
+            mTotalVolumeField = null;
             mMessage = "FIT indisponible";
         }
     }
@@ -556,6 +611,17 @@ class WorkoutEngineView extends WatchUi.View {
         if (mRepsField != null) {
             (mRepsField as FitContributor.Field).setData(mCurrentReps);
         }
+        if (mExerciseField != null) {
+            var exerciseName = fitExerciseName(dictionaryString(exercise as Lang.Dictionary, "title", "Exercice"));
+            try {
+                (mExerciseField as FitContributor.Field).setData(exerciseName);
+            } catch (error) {
+                (mExerciseField as FitContributor.Field).setData("Exercice " + (mCurrentExerciseIndex + 1));
+            }
+        }
+        if (mSetNumberField != null) {
+            (mSetNumberField as FitContributor.Field).setData(mCurrentSetIndex + 1);
+        }
         if (mSession != null && (mSession as ActivityRecording.Session).isRecording()) {
             (mSession as ActivityRecording.Session).addLap();
         }
@@ -674,6 +740,7 @@ class WorkoutEngineView extends WatchUi.View {
         mFinishing = true;
         stopTicker();
         persistDraft();
+        setFitSummaryData();
 
         var summary = new WorkoutSummaryView(
             mModel,
@@ -694,10 +761,42 @@ class WorkoutEngineView extends WatchUi.View {
             if (session.isRecording()) {
                 session.stop();
             }
+            setFitSummaryData();
             session.save();
             Sensor.setEnabledSensors([]);
             persistDraft();
         }
+    }
+
+    private function setFitSummaryData() as Void {
+        var totalReps = 0;
+        var totalVolume = 0.0;
+        for (var index = 0; index < mCompletedSetsHistory.size(); index += 1) {
+            var raw = mCompletedSetsHistory[index];
+            if (!(raw instanceof Lang.Dictionary)) {
+                continue;
+            }
+            var completed = raw as Lang.Dictionary;
+            var reps = dictionaryNumber(completed, "reps", 0);
+            totalReps += reps;
+            totalVolume += dictionaryFloat(completed, "weight_kg", 0.0) * reps;
+        }
+        if (mTotalSetsField != null) {
+            (mTotalSetsField as FitContributor.Field).setData(mCompletedSetsHistory.size());
+        }
+        if (mTotalRepsField != null) {
+            (mTotalRepsField as FitContributor.Field).setData(totalReps);
+        }
+        if (mTotalVolumeField != null) {
+            (mTotalVolumeField as FitContributor.Field).setData(totalVolume);
+        }
+    }
+
+    private function fitExerciseName(value as Lang.String) as Lang.String {
+        if (value.length() <= 40) {
+            return value;
+        }
+        return value.substring(0, 40) as Lang.String;
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
