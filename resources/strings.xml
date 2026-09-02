@@ -16,6 +16,6 @@
         <string id="TotalRepsLabel">Répétitions totales</string>
         <string id="TotalVolumeLabel">Volume total</string>
         <string id="SetsUnit">séries</string>
-        <string id="EmptyUnit"></string>
+        <string id="EmptyUnit">&#160;</string>
     </strings>
 </resources>

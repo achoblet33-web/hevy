@@ -129,7 +129,7 @@ class WorkoutSummaryView extends WatchUi.View {
             "description" => "Enregistré depuis Garmin",
             "start_time" => isoUtc(mStartSeconds),
             "end_time" => isoUtc(mEndSeconds),
-            "is_private" => false,
+            "is_private" => true,
             "exercises" => buildExercisePayloads()
         };
     }

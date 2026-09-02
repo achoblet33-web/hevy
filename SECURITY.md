@@ -5,6 +5,7 @@
 - Chaque utilisateur renseigne sa propre clé API Hevy. Aucune clé partagée n’est incluse dans le code ou le paquet Connect IQ.
 - Les échanges réseau vont directement de Garmin Connect Mobile vers `https://api.hevyapp.com` en HTTPS. Le projet n’exploite aucun serveur intermédiaire.
 - L’application ne journalise jamais la clé API ni le contenu des réponses Hevy.
+- Les nouvelles séances Hevy sont créées privées par défaut.
 - Les routines et séances en attente sont limitées et stockées uniquement dans l’espace privé de l’application.
 - Les permissions `Communications`, `Fit`, `FitContributor` et `Sensor` sont nécessaires respectivement pour Hevy, l’activité Garmin, les champs FIT personnalisés et l’activation explicite de la fréquence cardiaque.
 

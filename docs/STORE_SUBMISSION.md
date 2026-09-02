@@ -10,7 +10,7 @@ L’icône actuelle est originale et ne reprend pas le logo Hevy. Avant publicat
 
 ## Description française proposée
 
-Strength Sync for Hevy permet de lancer vos routines Hevy depuis une Garmin Fenix 8 47 mm, de suivre chaque série avec commandes tactiles et boutons, puis d’envoyer la séance terminée vers votre compte Hevy. L’activité Garmin enregistre les données physiologiques natives et ajoute dans Garmin Connect des champs par tour pour l’exercice, le numéro de série, la charge et les répétitions, ainsi qu’un résumé du volume.
+Strength Sync for Hevy permet de lancer vos routines Hevy depuis une Garmin Fenix 8 47 mm, de suivre chaque série avec commandes tactiles et boutons, puis d’envoyer la séance terminée, privée par défaut, vers votre compte Hevy. L’activité Garmin enregistre les données physiologiques natives et ajoute dans Garmin Connect des champs par tour pour l’exercice, le numéro de série, la charge et les répétitions, ainsi qu’un résumé du volume.
 
 Fonctions principales : cache hors ligne des routines, préchargement des objectifs Hevy, roulette tactile pour poids et répétitions, repos ajustable, pause, annulation confirmée et file d’envoi hors ligne.
 

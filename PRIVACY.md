@@ -17,6 +17,8 @@ L’application traite uniquement les données nécessaires à son fonctionnemen
 
 La montre communique directement avec l’API publique Hevy sur `https://api.hevyapp.com`. La clé API sert à télécharger les routines du compte de l’utilisateur et à y créer les séances terminées.
 
+Les séances envoyées sont créées privées par défaut. L’utilisateur peut ensuite modifier leur visibilité depuis Hevy.
+
 La montre crée également un fichier d’activité FIT. Garmin peut synchroniser ce fichier vers Garmin Connect conformément aux choix et au compte Garmin de l’utilisateur.
 
 L’éditeur de cette application n’exploite aucun serveur intermédiaire et ne reçoit aucune clé API, routine, séance, donnée physiologique, donnée analytique ou donnée publicitaire.
@@ -45,7 +47,7 @@ Les données déjà transmises à Hevy ou Garmin sont régies par les politiques
 
 ## Services tiers
 
-- [Politique de confidentialité Hevy](https://www.hevyapp.com/privacy/)
+- [Politique de confidentialité Hevy](https://www.hevyapp.com/legal/privacy-policy/)
 - [Politique de confidentialité Garmin](https://www.garmin.com/privacy/)
 
 Cette politique sera mise à jour si le traitement des données change. Son URL devra rester stable ou rediriger vers sa nouvelle version.
