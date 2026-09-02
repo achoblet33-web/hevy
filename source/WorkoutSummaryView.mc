@@ -202,25 +202,33 @@ class WorkoutSummaryView extends WatchUi.View {
     }
 
     private function drawWrappedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font as Graphics.FontType, value as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {
-        var words = value.split(" ");
         var lines = [];
-        var current = "";
-        for (var index = 0; index < words.size(); index += 1) {
-            var rawWord = words[index];
-            if (!(rawWord instanceof Lang.String)) {
-                continue;
+        var start = 0;
+        while (start < value.length()) {
+            var end = start + 1;
+            var lastFit = end;
+            while (end <= value.length()) {
+                var candidate = value.substring(start, end) as Lang.String;
+                if (dc.getTextWidthInPixels(candidate, font) > maxWidth) {
+                    break;
+                }
+                lastFit = end;
+                end += 1;
             }
-            var word = rawWord as Lang.String;
-            var candidate = current.length() == 0 ? word : current + " " + word;
-            if (current.length() > 0 && dc.getTextWidthInPixels(candidate, font) > maxWidth) {
-                lines.add(current);
-                current = word;
-            } else {
-                current = candidate;
+            var lineEnd = lastFit;
+            if (lastFit < value.length()) {
+                while (lineEnd > start && (value.substring(lineEnd - 1, lineEnd) as Lang.String) != " ") {
+                    lineEnd -= 1;
+                }
+                if (lineEnd == start) {
+                    lineEnd = lastFit;
+                }
             }
-        }
-        if (current.length() > 0) {
-            lines.add(current);
+            lines.add(value.substring(start, lineEnd) as Lang.String);
+            start = lineEnd;
+            while (start < value.length() && (value.substring(start, start + 1) as Lang.String) == " ") {
+                start += 1;
+            }
         }
         var lineHeight = dc.getFontHeight(font) + 2;
         var startY = y - (((lines.size() - 1) * lineHeight) / 2);
