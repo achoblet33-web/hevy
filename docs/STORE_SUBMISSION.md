@@ -50,6 +50,13 @@ Privacy policy: `https://github.com/achoblet33-web/hevy/blob/main/PRIVACY.md`
 
 Le manifeste actuel ne contient que `fenix847mm`. Ne cocher dans le portail Garmin que les appareils réellement contenus dans le fichier `.iq` et testés. Pour élargir la compatibilité, ajouter les produits par groupes de résolution, compiler chaque cible, vérifier toutes les vues dans le simulateur, puis tester au moins une montre physique par famille d'écran.
 
+## Visuels prêts pour le Store
+
+- `docs/store-assets/workout-controls-500.png` : commandes physiques et tactiles ;
+- `docs/store-assets/hevy-api-setup-500.png` : configuration de la clé API personnelle.
+
+Les deux fichiers sont carrés, en sRGB et exportés en 500 × 500 px avec une marge intérieure. Ils ne contiennent ni logo Garmin/Hevy ni clé réelle.
+
 ## Checklist avant envoi
 
 - [ ] Tester une séance complète sur la vraie Fenix 8 et vérifier l’activité dans Garmin Connect mobile et web.
