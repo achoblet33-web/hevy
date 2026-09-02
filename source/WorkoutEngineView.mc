@@ -20,6 +20,9 @@ class WorkoutEngineView extends WatchUi.View {
     private const FIT_REPS_FIELD_ID = 1;
     private const WEIGHT_STEP_KG = 2.5;
     private const REST_STEP_SECONDS = 15;
+    private const EDITOR_NONE = 0;
+    private const EDITOR_REPS = 1;
+    private const EDITOR_WEIGHT = 2;
 
     private const COLOR_GREEN = 0x00E676;
     private const COLOR_BLUE = 0x29B6F6;
@@ -42,6 +45,8 @@ class WorkoutEngineView extends WatchUi.View {
     private var mCurrentSetIndex as Lang.Number = 0;
     private var mCurrentWeight as Lang.Float = 0.0;
     private var mCurrentReps as Lang.Number = 0;
+    private var mTargetWeight as Lang.Float = 0.0;
+    private var mTargetReps as Lang.Number = 0;
     private var mRestRemaining as Lang.Number = 90;
     private var mWorkoutSeconds as Lang.Number = 0;
     private var mSessionStartSeconds as Lang.Number = 0;
@@ -56,6 +61,11 @@ class WorkoutEngineView extends WatchUi.View {
     private var mLoading as Lang.Boolean = false;
     private var mFinishing as Lang.Boolean = false;
     private var mMessage as Lang.String = "Préparation";
+    private var mEditorMode as Lang.Number = EDITOR_NONE;
+    private var mEditorOriginalWeight as Lang.Float = 0.0;
+    private var mEditorOriginalReps as Lang.Number = 0;
+    private var mCancelConfirmation as Lang.Boolean = false;
+    private var mStateBeforeCancel as Lang.Number = STATE_ACTIVE_SET;
 
     function initialize(model as WorkoutDataModel) {
         View.initialize();
@@ -164,6 +174,124 @@ class WorkoutEngineView extends WatchUi.View {
         return mState;
     }
 
+    function isEditorOpen() as Lang.Boolean {
+        return mEditorMode != EDITOR_NONE;
+    }
+
+    function isCancelConfirmationOpen() as Lang.Boolean {
+        return mCancelConfirmation;
+    }
+
+    function openRepsEditor() as Void {
+        if (mState != STATE_ACTIVE_SET || mCancelConfirmation) {
+            return;
+        }
+        mEditorOriginalReps = mCurrentReps;
+        mEditorMode = EDITOR_REPS;
+        WatchUi.requestUpdate();
+    }
+
+    function openWeightEditor() as Void {
+        if (mState != STATE_ACTIVE_SET || mCancelConfirmation) {
+            return;
+        }
+        mEditorOriginalWeight = mCurrentWeight;
+        mEditorMode = EDITOR_WEIGHT;
+        WatchUi.requestUpdate();
+    }
+
+    function adjustEditor(delta as Lang.Number) as Void {
+        if (mEditorMode == EDITOR_REPS) {
+            adjustReps(delta);
+        } else if (mEditorMode == EDITOR_WEIGHT) {
+            adjustWeight(delta);
+        }
+    }
+
+    function acceptEditor() as Void {
+        if (mEditorMode == EDITOR_NONE) {
+            return;
+        }
+        mEditorMode = EDITOR_NONE;
+        persistDraft();
+        WatchUi.requestUpdate();
+    }
+
+    function cancelEditor() as Void {
+        if (mEditorMode == EDITOR_REPS) {
+            mCurrentReps = mEditorOriginalReps;
+        } else if (mEditorMode == EDITOR_WEIGHT) {
+            mCurrentWeight = mEditorOriginalWeight;
+        }
+        mEditorMode = EDITOR_NONE;
+        WatchUi.requestUpdate();
+    }
+
+    function handleSwipe(direction as Lang.Number) as Lang.Boolean {
+        if (mEditorMode == EDITOR_NONE) {
+            return false;
+        }
+        if (direction == WatchUi.SWIPE_UP) {
+            adjustEditor(1);
+        } else if (direction == WatchUi.SWIPE_DOWN) {
+            adjustEditor(-1);
+        }
+        return true;
+    }
+
+    function requestCancelWorkout() as Void {
+        if (mState == STATE_PREPARATION || mFinishing || mCancelConfirmation) {
+            return;
+        }
+        if (mEditorMode != EDITOR_NONE) {
+            acceptEditor();
+        }
+        mStateBeforeCancel = mState;
+        if (mState == STATE_ACTIVE_SET || mState == STATE_REST) {
+            stopTicker();
+            stopFitRecording();
+        }
+        mCancelConfirmation = true;
+        WatchUi.requestUpdate();
+    }
+
+    function dismissCancelWorkout() as Void {
+        if (!mCancelConfirmation) {
+            return;
+        }
+        mCancelConfirmation = false;
+        if (mStateBeforeCancel == STATE_ACTIVE_SET || mStateBeforeCancel == STATE_REST) {
+            startFitRecording();
+            startTicker();
+        }
+        WatchUi.requestUpdate();
+    }
+
+    function confirmCancelWorkout() as Void {
+        if (!mCancelConfirmation) {
+            return;
+        }
+        mFinishing = true;
+        stopTicker();
+        if (mSession != null) {
+            try {
+                var session = mSession as ActivityRecording.Session;
+                if (session.isRecording()) {
+                    session.stop();
+                }
+                session.discard();
+            } catch (error) {
+            }
+        }
+        Sensor.setEnabledSensors([]);
+        mSession = null;
+        mWeightField = null;
+        mRepsField = null;
+        mCompletedSetsHistory = [];
+        mModel.clearDraft();
+        System.exit();
+    }
+
     function moveRoutineSelection(delta as Lang.Number) as Void {
         if (mState != STATE_PREPARATION || mRoutines.size() == 0) {
             return;
@@ -268,6 +396,14 @@ class WorkoutEngineView extends WatchUi.View {
     }
 
     function handleLapBack() as Void {
+        if (mCancelConfirmation) {
+            dismissCancelWorkout();
+            return;
+        }
+        if (mEditorMode != EDITOR_NONE) {
+            cancelEditor();
+            return;
+        }
         if (mState == STATE_PREPARATION) {
             System.exit();
         } else if (mState == STATE_ACTIVE_SET) {
@@ -281,6 +417,33 @@ class WorkoutEngineView extends WatchUi.View {
         var bottomStart = (mHeight * 77) / 100;
         var centerX = mWidth / 2;
         var centerY = mHeight / 2;
+
+        if (mCancelConfirmation) {
+            if (y > bottomStart && x >= centerX) {
+                confirmCancelWorkout();
+            } else if (y > bottomStart) {
+                dismissCancelWorkout();
+            }
+            return;
+        }
+
+        if (mEditorMode != EDITOR_NONE) {
+            if (y > bottomStart) {
+                if (x < centerX) {
+                    acceptEditor();
+                } else {
+                    cancelEditor();
+                }
+                return;
+            }
+            var wheelTop = percentY(23);
+            var wheelRowHeight = percentY(10);
+            if (y >= wheelTop && y < wheelTop + (wheelRowHeight * 5)) {
+                var row = (y - wheelTop) / wheelRowHeight;
+                adjustEditor(2 - row);
+            }
+            return;
+        }
 
         if (mState == STATE_PREPARATION) {
             if (y > bottomStart) {
@@ -307,17 +470,20 @@ class WorkoutEngineView extends WatchUi.View {
                     togglePause();
                 }
             } else {
-                finishWorkout();
+                if (mState == STATE_PAUSED) {
+                    requestCancelWorkout();
+                } else {
+                    finishWorkout();
+                }
             }
             return;
         }
 
         if (mState == STATE_ACTIVE_SET) {
-            var direction = y < centerY ? 1 : -1;
             if (x < centerX) {
-                adjustReps(direction);
+                openRepsEditor();
             } else {
-                adjustWeight(direction);
+                openWeightEditor();
             }
         } else if (mState == STATE_REST) {
             adjustRest(y < centerY ? REST_STEP_SECONDS : -REST_STEP_SECONDS);
@@ -431,12 +597,16 @@ class WorkoutEngineView extends WatchUi.View {
     private function loadCurrentTarget() as Void {
         var targetSet = getCurrentTargetSet();
         if (targetSet == null) {
+            mTargetWeight = 0.0;
+            mTargetReps = 0;
             mCurrentWeight = 0.0;
             mCurrentReps = 0;
             return;
         }
-        mCurrentWeight = dictionaryFloat(targetSet as Lang.Dictionary, "weight_kg", 0.0);
-        mCurrentReps = dictionaryNumber(targetSet as Lang.Dictionary, "reps", 0);
+        mTargetWeight = dictionaryFloat(targetSet as Lang.Dictionary, "weight_kg", 0.0);
+        mTargetReps = dictionaryNumber(targetSet as Lang.Dictionary, "reps", 0);
+        mCurrentWeight = mTargetWeight;
+        mCurrentReps = mTargetReps;
     }
 
     private function getExercises() as Lang.Array {
@@ -531,9 +701,20 @@ class WorkoutEngineView extends WatchUi.View {
     }
 
     function onUpdate(dc as Graphics.Dc) as Void {
+        mWidth = dc.getWidth();
+        mHeight = dc.getHeight();
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
         dc.clear();
         dc.setAntiAlias(true);
+
+        if (mCancelConfirmation) {
+            drawCancelConfirmation(dc);
+            return;
+        }
+        if (mEditorMode != EDITOR_NONE) {
+            drawEditor(dc);
+            return;
+        }
 
         if (mState == STATE_PREPARATION) {
             drawPreparation(dc);
@@ -549,8 +730,8 @@ class WorkoutEngineView extends WatchUi.View {
     private function drawPreparation(dc as Graphics.Dc) as Void {
         drawHeader(dc, "HEVY", COLOR_GREEN);
         if (mRoutines.size() == 0) {
-            drawFittedText(dc, mWidth / 2, percentY(34), Graphics.FONT_MEDIUM, mMessage, COLOR_MUTED, percentX(68));
-            drawFittedText(dc, mWidth / 2, percentY(47), Graphics.FONT_SMALL, "Synchronisez une routine", Graphics.COLOR_WHITE, percentX(70));
+            drawWrappedText(dc, mWidth / 2, percentY(34), Graphics.FONT_SMALL, mMessage, COLOR_MUTED, percentX(72));
+            drawWrappedText(dc, mWidth / 2, percentY(51), Graphics.FONT_SMALL, "Synchronisez une routine", Graphics.COLOR_WHITE, percentX(72));
             drawButton(dc, false, "AUCUNE", COLOR_MUTED);
             drawButton(dc, true, "SYNC", COLOR_BLUE);
             return;
@@ -558,8 +739,8 @@ class WorkoutEngineView extends WatchUi.View {
 
         var selected = mRoutines[mSelectedRoutineIndex] as Lang.Dictionary;
         drawFittedText(dc, mWidth / 2, percentY(25), Graphics.FONT_XTINY, "ROUTINE " + (mSelectedRoutineIndex + 1) + "/" + mRoutines.size(), COLOR_MUTED, percentX(62));
-        drawFittedText(dc, mWidth / 2, percentY(36), Graphics.FONT_LARGE, dictionaryString(selected, "title", "Routine"), Graphics.COLOR_WHITE, percentX(72));
-        drawFittedText(dc, mWidth / 2, percentY(56), Graphics.FONT_XTINY, "TOUCHEZ HAUT / BAS", COLOR_MUTED, percentX(64));
+        drawWrappedText(dc, mWidth / 2, percentY(39), Graphics.FONT_SMALL, dictionaryString(selected, "title", "Routine"), Graphics.COLOR_WHITE, percentX(74));
+        drawFittedText(dc, mWidth / 2, percentY(58), Graphics.FONT_XTINY, "TOUCHEZ HAUT / BAS", COLOR_MUTED, percentX(70));
         drawFittedText(dc, mWidth / 2, percentY(64), Graphics.FONT_XTINY, mMessage, COLOR_GREEN, percentX(64));
         drawButton(dc, false, "START", COLOR_GREEN);
         drawButton(dc, true, "SYNC", COLOR_BLUE);
@@ -569,14 +750,15 @@ class WorkoutEngineView extends WatchUi.View {
         var exercise = getCurrentExercise();
         var exerciseTitle = exercise == null ? "Exercice" : dictionaryString(exercise as Lang.Dictionary, "title", "Exercice");
         drawHeader(dc, formatDuration(mWorkoutSeconds), COLOR_GREEN);
-        drawFittedText(dc, mWidth / 2, percentY(19), Graphics.FONT_MEDIUM, exerciseTitle, Graphics.COLOR_WHITE, percentX(74));
-        drawFittedText(dc, mWidth / 2, percentY(30), Graphics.FONT_XTINY, "SÉRIE " + (mCurrentSetIndex + 1), COLOR_MUTED, percentX(55));
+        drawWrappedText(dc, mWidth / 2, percentY(20), Graphics.FONT_SMALL, exerciseTitle, Graphics.COLOR_WHITE, percentX(76));
+        drawFittedText(dc, mWidth / 2, percentY(32), Graphics.FONT_XTINY, "SÉRIE " + (mCurrentSetIndex + 1) + "/" + currentExerciseSetCount(), COLOR_MUTED, percentX(55));
 
-        drawFittedText(dc, percentX(29), percentY(43), Graphics.FONT_XTINY, "REPS", COLOR_BLUE, percentX(27));
-        drawFittedText(dc, percentX(29), percentY(51), Graphics.FONT_LARGE, mCurrentReps.toString(), Graphics.COLOR_WHITE, percentX(30));
-        drawFittedText(dc, percentX(71), percentY(43), Graphics.FONT_XTINY, "POIDS KG", COLOR_ORANGE, percentX(27));
-        drawFittedText(dc, percentX(71), percentY(51), Graphics.FONT_LARGE, mCurrentWeight.format("%.1f"), Graphics.COLOR_WHITE, percentX(30));
-        drawFittedText(dc, mWidth / 2, percentY(68), Graphics.FONT_XTINY, "HAUT +   •   BAS -", COLOR_MUTED, percentX(60));
+        drawFittedText(dc, percentX(29), percentY(42), Graphics.FONT_XTINY, "REPS", COLOR_BLUE, percentX(27));
+        drawFittedText(dc, percentX(29), percentY(49), Graphics.FONT_LARGE, mCurrentReps.toString(), Graphics.COLOR_WHITE, percentX(30));
+        drawFittedText(dc, percentX(71), percentY(42), Graphics.FONT_XTINY, "POIDS KG", COLOR_ORANGE, percentX(27));
+        drawFittedText(dc, percentX(71), percentY(49), Graphics.FONT_LARGE, mCurrentWeight.format("%.1f"), Graphics.COLOR_WHITE, percentX(30));
+        drawFittedText(dc, mWidth / 2, percentY(62), Graphics.FONT_XTINY, "CIBLE HEVY: " + mTargetReps + " reps • " + mTargetWeight.format("%.1f") + " kg", COLOR_GREEN, percentX(76));
+        drawFittedText(dc, mWidth / 2, percentY(69), Graphics.FONT_XTINY, "TOUCHEZ UNE VALEUR", COLOR_MUTED, percentX(70));
         drawButton(dc, false, "LOG SET", COLOR_GREEN);
         drawButton(dc, true, "FINISH", COLOR_RED);
     }
@@ -587,8 +769,8 @@ class WorkoutEngineView extends WatchUi.View {
         drawFittedText(dc, mWidth / 2, percentY(39), Graphics.FONT_LARGE, formatDuration(mRestRemaining), Graphics.COLOR_WHITE, percentX(66));
         var exercise = getCurrentExercise();
         var nextTitle = exercise == null ? "" : dictionaryString(exercise as Lang.Dictionary, "title", "");
-        drawFittedText(dc, mWidth / 2, percentY(57), Graphics.FONT_SMALL, nextTitle, COLOR_BLUE, percentX(70));
-        drawFittedText(dc, mWidth / 2, percentY(67), Graphics.FONT_XTINY, "HAUT +15s   •   BAS -15s", COLOR_MUTED, percentX(66));
+        drawWrappedText(dc, mWidth / 2, percentY(56), Graphics.FONT_XTINY, nextTitle, COLOR_BLUE, percentX(74));
+        drawFittedText(dc, mWidth / 2, percentY(69), Graphics.FONT_XTINY, "HAUT +15s • BAS -15s", COLOR_MUTED, percentX(72));
         drawButton(dc, false, "SKIP", COLOR_ORANGE);
         drawButton(dc, true, "FINISH", COLOR_RED);
     }
@@ -596,9 +778,106 @@ class WorkoutEngineView extends WatchUi.View {
     private function drawPaused(dc as Graphics.Dc) as Void {
         drawHeader(dc, "PAUSE", COLOR_ORANGE);
         drawFittedText(dc, mWidth / 2, percentY(36), Graphics.FONT_LARGE, formatDuration(mWorkoutSeconds), Graphics.COLOR_WHITE, percentX(60));
-        drawFittedText(dc, mWidth / 2, percentY(54), Graphics.FONT_SMALL, "START pour reprendre", COLOR_MUTED, percentX(70));
+        drawWrappedText(dc, mWidth / 2, percentY(55), Graphics.FONT_SMALL, "START pour reprendre", COLOR_MUTED, percentX(72));
         drawButton(dc, false, "RESUME", COLOR_GREEN);
-        drawButton(dc, true, "FINISH", COLOR_RED);
+        drawButton(dc, true, "ANNULER", COLOR_RED);
+    }
+
+    private function drawEditor(dc as Graphics.Dc) as Void {
+        var title = mEditorMode == EDITOR_REPS ? "RÉPÉTITIONS" : "POIDS (KG)";
+        drawHeader(dc, title, mEditorMode == EDITOR_REPS ? COLOR_BLUE : COLOR_ORANGE);
+        drawFittedText(dc, mWidth / 2, percentY(17), Graphics.FONT_XTINY, "GLISSEZ OU TOUCHEZ", COLOR_MUTED, percentX(70));
+
+        var rowHeight = percentY(10);
+        var wheelTop = percentY(23);
+        for (var row = 0; row < 5; row += 1) {
+            var offset = 2 - row;
+            var rowY = wheelTop + (row * rowHeight);
+            if (row == 2) {
+                dc.setColor(COLOR_PANEL, Graphics.COLOR_BLACK);
+                dc.fillRoundedRectangle(percentX(22), rowY - percentY(1), percentX(56), rowHeight, 14);
+            }
+            drawFittedText(
+                dc,
+                mWidth / 2,
+                rowY,
+                row == 2 ? Graphics.FONT_LARGE : Graphics.FONT_MEDIUM,
+                editorValueText(offset),
+                row == 2 ? Graphics.COLOR_WHITE : COLOR_MUTED,
+                percentX(54)
+            );
+        }
+        drawButton(dc, false, "VALIDER", COLOR_GREEN);
+        drawButton(dc, true, "RETOUR", COLOR_MUTED);
+    }
+
+    private function editorValueText(offset as Lang.Number) as Lang.String {
+        if (mEditorMode == EDITOR_REPS) {
+            var reps = mCurrentReps + offset;
+            if (reps < 0) {
+                reps = 0;
+            } else if (reps > 999) {
+                reps = 999;
+            }
+            return reps + " reps";
+        }
+        var weight = mCurrentWeight + (WEIGHT_STEP_KG * offset);
+        if (weight < 0.0) {
+            weight = 0.0;
+        } else if (weight > 999.0) {
+            weight = 999.0;
+        }
+        return weight.format("%.1f") + " kg";
+    }
+
+    private function drawCancelConfirmation(dc as Graphics.Dc) as Void {
+        drawHeader(dc, "ANNULATION", COLOR_RED);
+        drawWrappedText(dc, mWidth / 2, percentY(33), Graphics.FONT_MEDIUM, "Annuler cette séance ?", Graphics.COLOR_WHITE, percentX(72));
+        drawWrappedText(dc, mWidth / 2, percentY(55), Graphics.FONT_SMALL, "Aucune donnée ne sera envoyée à Hevy ni enregistrée dans Garmin.", COLOR_MUTED, percentX(72));
+        drawButton(dc, false, "RETOUR", COLOR_GREEN);
+        drawButton(dc, true, "ANNULER", COLOR_RED);
+    }
+
+    private function currentExerciseSetCount() as Lang.Number {
+        var exercise = getCurrentExercise();
+        if (exercise == null) {
+            return 0;
+        }
+        var rawSets = (exercise as Lang.Dictionary)["sets"];
+        return rawSets instanceof Lang.Array ? (rawSets as Lang.Array).size() : 0;
+    }
+
+    private function drawWrappedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font as Graphics.FontType, value as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {
+        var words = value.split(" ");
+        var lines = [];
+        var current = "";
+        for (var index = 0; index < words.size(); index += 1) {
+            var rawWord = words[index];
+            if (!(rawWord instanceof Lang.String)) {
+                continue;
+            }
+            var word = rawWord as Lang.String;
+            var candidate = current.length() == 0 ? word : current + " " + word;
+            if (current.length() > 0 && dc.getTextWidthInPixels(candidate, font) > maxWidth) {
+                lines.add(current);
+                current = word;
+            } else {
+                current = candidate;
+            }
+        }
+        if (current.length() > 0) {
+            lines.add(current);
+        }
+
+        var lineHeight = dc.getFontHeight(font) + 2;
+        var startY = y - (((lines.size() - 1) * lineHeight) / 2);
+        dc.setColor(color, Graphics.COLOR_BLACK);
+        for (var lineIndex = 0; lineIndex < lines.size(); lineIndex += 1) {
+            var rawLine = lines[lineIndex];
+            if (rawLine instanceof Lang.String) {
+                dc.drawText(x, startY + (lineIndex * lineHeight), font, rawLine as Lang.String, Graphics.TEXT_JUSTIFY_CENTER);
+            }
+        }
     }
 
     private function drawHeader(dc as Graphics.Dc, text as Lang.String, color as Lang.Number) as Void {

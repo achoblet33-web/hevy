@@ -11,6 +11,19 @@ class WorkoutEngineDelegate extends WatchUi.BehaviorDelegate {
 
     function onKey(keyEvent as WatchUi.KeyEvent) as Lang.Boolean {
         var key = keyEvent.getKey();
+        if (mView.isCancelConfirmationOpen()) {
+            return true;
+        }
+        if (mView.isEditorOpen()) {
+            if (key == WatchUi.KEY_UP) {
+                mView.adjustEditor(1);
+            } else if (key == WatchUi.KEY_DOWN) {
+                mView.adjustEditor(-1);
+            } else if (key == WatchUi.KEY_ENTER) {
+                mView.acceptEditor();
+            }
+            return true;
+        }
         if (key == WatchUi.KEY_ENTER) {
             mView.togglePause();
             return true;
@@ -26,6 +39,10 @@ class WorkoutEngineDelegate extends WatchUi.BehaviorDelegate {
             }
         }
         return false;
+    }
+
+    function onSwipe(swipeEvent as WatchUi.SwipeEvent) as Lang.Boolean {
+        return mView.handleSwipe(swipeEvent.getDirection());
     }
 
     function onTap(clickEvent as WatchUi.ClickEvent) as Lang.Boolean {

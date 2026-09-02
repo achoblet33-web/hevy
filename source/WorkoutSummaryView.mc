@@ -187,7 +187,7 @@ class WorkoutSummaryView extends WatchUi.View {
         dc.setAntiAlias(true);
 
         drawFittedText(dc, mWidth / 2, percentY(8), Graphics.FONT_SMALL, "TERMINÉ", COLOR_GREEN, percentX(56));
-        drawFittedText(dc, mWidth / 2, percentY(19), Graphics.FONT_MEDIUM, mRoutineTitle, Graphics.COLOR_WHITE, percentX(72));
+        drawWrappedText(dc, mWidth / 2, percentY(19), Graphics.FONT_SMALL, mRoutineTitle, Graphics.COLOR_WHITE, percentX(74));
         drawFittedText(dc, mWidth / 2, percentY(32), Graphics.FONT_XTINY, "DURÉE", COLOR_MUTED, percentX(42));
         drawFittedText(dc, mWidth / 2, percentY(39), Graphics.FONT_LARGE, formatDuration(mDurationSeconds), Graphics.COLOR_WHITE, percentX(55));
 
@@ -197,8 +197,40 @@ class WorkoutSummaryView extends WatchUi.View {
         drawFittedText(dc, percentX(70), percentY(64), Graphics.FONT_MEDIUM, mTotalVolume.format("%.0f"), Graphics.COLOR_WHITE, percentX(28));
 
         drawFittedText(dc, mWidth / 2, percentY(76), Graphics.FONT_XTINY, mTotalReps + " répétitions", COLOR_MUTED, percentX(58));
-        drawFittedText(dc, mWidth / 2, percentY(83), Graphics.FONT_XTINY, mSyncLabel, mSyncColor, percentX(70));
-        drawFittedText(dc, mWidth / 2, percentY(88), Graphics.FONT_XTINY, "BACK pour quitter", COLOR_MUTED, percentX(52));
+        drawWrappedText(dc, mWidth / 2, percentY(82), Graphics.FONT_XTINY, mSyncLabel, mSyncColor, percentX(72));
+        drawFittedText(dc, mWidth / 2, percentY(90), Graphics.FONT_XTINY, "BACK pour quitter", COLOR_MUTED, percentX(66));
+    }
+
+    private function drawWrappedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font as Graphics.FontType, value as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {
+        var words = value.split(" ");
+        var lines = [];
+        var current = "";
+        for (var index = 0; index < words.size(); index += 1) {
+            var rawWord = words[index];
+            if (!(rawWord instanceof Lang.String)) {
+                continue;
+            }
+            var word = rawWord as Lang.String;
+            var candidate = current.length() == 0 ? word : current + " " + word;
+            if (current.length() > 0 && dc.getTextWidthInPixels(candidate, font) > maxWidth) {
+                lines.add(current);
+                current = word;
+            } else {
+                current = candidate;
+            }
+        }
+        if (current.length() > 0) {
+            lines.add(current);
+        }
+        var lineHeight = dc.getFontHeight(font) + 2;
+        var startY = y - (((lines.size() - 1) * lineHeight) / 2);
+        dc.setColor(color, Graphics.COLOR_BLACK);
+        for (var lineIndex = 0; lineIndex < lines.size(); lineIndex += 1) {
+            var rawLine = lines[lineIndex];
+            if (rawLine instanceof Lang.String) {
+                dc.drawText(x, startY + (lineIndex * lineHeight), font, rawLine as Lang.String, Graphics.TEXT_JUSTIFY_CENTER);
+            }
+        }
     }
 
     private function drawFittedText(dc as Graphics.Dc, x as Lang.Number, y as Lang.Number, font as Graphics.FontType, text as Lang.String, color as Lang.Number, maxWidth as Lang.Number) as Void {

@@ -9,6 +9,9 @@ Application Connect IQ autonome de musculation pour `fenix847mm`, conçue pour l
 - active le capteur cardiaque afin que les données physiologiques natives alimentent le FIT ;
 - écrit le poids (`Float`) et les répétitions (`UInt16`) comme champs FIT par tour ;
 - prend en charge boutons physiques et zones tactiles relatives à l'écran ;
+- précharge pour chaque série la cible exacte de répétitions et de poids reçue de Hevy ;
+- ouvre une roulette tactile dédiée lorsqu'on touche les répétitions ou le poids ;
+- permet d'annuler une séance avec confirmation, sans FIT Garmin ni envoi Hevy ;
 - sauvegarde chaque série dans un brouillon local ;
 - met les séances terminées en file locale avant l'envoi à Hevy ;
 - réessaie une séance en attente au lancement suivant ;
@@ -26,8 +29,9 @@ Pendant une série :
 
 - `START/ENTER` : pause ou reprise uniquement ;
 - `LAP/BACK` : valider la série ;
-- toucher en haut/bas à gauche : répétitions `+1/-1` ;
-- toucher en haut/bas à droite : poids `+2,5/-2,5 kg` ;
+- toucher la valeur de gauche : roulette des répétitions ;
+- toucher la valeur de droite : roulette du poids par pas de `2,5 kg` ;
+- glisser verticalement, utiliser `UP/DOWN` ou toucher une ligne pour choisir rapidement ;
 - bouton tactile gauche : `LOG SET` ; bouton tactile droit : `FINISH`.
 
 Pendant le repos :
@@ -37,6 +41,8 @@ Pendant le repos :
 - `START/ENTER` : pause ou reprise.
 
 Dans la préparation, `UP/DOWN` ou la zone centrale choisit une routine, `START` tactile la lance et `LAP/BACK` quitte l'application. Le bouton physique `START/ENTER` n'est jamais utilisé pour lancer une séance.
+
+Pour annuler à tout moment, appuyer sur `START/ENTER`, toucher `ANNULER`, puis confirmer. La session FIT est alors supprimée, le brouillon local effacé et aucune séance n'est envoyée à Hevy.
 
 ## Compiler
 
